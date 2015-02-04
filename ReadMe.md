@@ -1,19 +1,19 @@
 tiny-basic
 =========
 
-A Tiny BASIC interpreter and compiler
+A [Tiny BASIC](https://en.wikipedia.org/wiki/Tiny_BASIC) interpreter and compiler
 
 ###Start REPL
 ``` python
-python tinybasic.py
+./tiny-basic.py
 ```
 
 ###Interpret file
 ```
-python tinybasic.py <input file>
+./tiny-basic.py <input file>
 ```
 
 ###Compile file to C
 ```
-python tinybasic.py -c <input file>
+./tiny-basic.py -c <input file>
 ```
