@@ -8,13 +8,12 @@ A Tiny BASIC interpreter and compiler
 python tinybasic.py
 ```
 
-###Interpret a file
+###Interpret file
 ```
 python tinybasic.py <input file>
 ```
 
-###Compile a file to C
+###Compile file to C
 ```
-python tinybasic.py <input file> [-c, --compile]
+python tinybasic.py -c <input file>
 ```
-
