@@ -1,7 +1,4 @@
-tiny-basic
-=========
-
-A [Tiny BASIC](https://en.wikipedia.org/wiki/Tiny_BASIC) interpreter and compiler
+[Tiny BASIC](https://en.wikipedia.org/wiki/Tiny_BASIC) interpreter and compiler
 
 ###Start REPL
 ``` python
