@@ -334,9 +334,9 @@ if ({0}[strlen({0}) - 1] == '\\n') {{ \n\
 class TinyBasic(object):
     
     def __init__(self):
-        self.parser = Parser()
+        self.parser      = Parser()
         self.interpreter = Interpreter()
-        self.compiler = Compiler()
+        self.compiler    = Compiler()
     
     def parse(self, program):
         return self.parser(program)
@@ -358,28 +358,31 @@ class TinyBasic(object):
                 print "parse error"
         self.repl()
 
-
 if __name__ == "__main__":
 
-    arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("path", nargs='?')
-    arg_parser.add_argument("-p", "--parse", action="store_true")
-    arg_parser.add_argument("-c", "--compile", action="store_true")
-    args = arg_parser.parse_args()
+    parser = argparse.ArgumentParser()
 
-    tiny_basic = TinyBasic()
+    parser.add_argument("input", nargs="?")
 
-    if args.path:
-        if os.path.isfile(args.path):
-            with io.open(args.path, "r") as f:
-                program = "".join(f.readlines())
-                program = program.encode("ascii", "ignore")
-                if args.parse:
-                    for line in tiny_basic.parse(program):
-                        print line
-                elif args.compile:
-                    tiny_basic.compile(program)
-                else:
-                    tiny_basic.interpret(program)
+    parser.add_argument("--compile", action="store_true")
+    parser.add_argument("--repl",    action="store_true")
+
+    args      = parser.parse_args()
+    tinyBasic = TinyBasic()
+
+    if args.repl:
+        tinyBasic.repl()
+    elif not args.input:
+        print "Error: No input file"
+        exit(1)
+    elif not os.path.isfile(args.input):
+        print "Error: Input file not found"
+        exit(1)
     else:
-        tiny_basic.repl()
+        with io.open(args.input, "r") as f:
+            program = f.read().encode("ascii", "ignore")
+        if args.compile:
+            tinyBasic.compile(program)
+        else:
+            tinyBasic.interpret(program)
+
