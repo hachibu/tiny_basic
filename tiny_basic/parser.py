@@ -2,7 +2,6 @@ import re
 import peglet
 
 class Parser(object):
-
     grammar = r"""
     lines       = _ line _ lines
                 | _ line
@@ -84,4 +83,3 @@ class Parser(object):
 
     def quote(self, token):
         return '"%s"' % token
-

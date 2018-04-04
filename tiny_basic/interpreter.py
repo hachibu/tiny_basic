@@ -1,14 +1,13 @@
-import parser
+from .parser import Parser
 import re
 
 class Interpreter(object):
-    
     def __init__(self):
         self.curr       = 0
         self.memory     = {}
         self.symbols    = {}
         self.parse_tree = None
-        self.parser     = parser.Parser()
+        self.parser     = Parser()
 
     def interpret(self, program):
         self.parse_tree = self.parser(program)
@@ -43,7 +42,7 @@ class Interpreter(object):
             self.end_stmt()
     
     def print_stmt(self, xs):
-        print " ".join(self.expr_list(xs))
+        print(" ".join(self.expr_list(xs)))
     
     def let_stmt(self, xs):
         head, tail = xs[0], xs[1]
@@ -51,7 +50,7 @@ class Interpreter(object):
     
     def input_stmt(self, xs):
         for x in xs:
-            self.symbols[x] = str(raw_input("? "))
+            self.symbols[x] = str(input("? "))
     
     def if_stmt(self, xs):
         head, tail = xs[0], xs[2:]
@@ -62,30 +61,31 @@ class Interpreter(object):
         n = self.expr(xs[0])
         self.curr = n
         self.run_stmt()
-    
+
     def run_stmt(self):
-        stmts = self.gen_stmt(self.memory)
-        while (stmts):
-            if self.curr >= 0:
-                try:
-                    self.curr, line = stmts.next()
-                    self.stmt(line)
-                except:
-                    break
-            else: 
+        stmts = self.gen_stmts()
+        while(stmts):
+            try:
+                self.curr, line = next(stmts)
+                self.stmt(line)
+            except StopIteration:
                 break
-    
-    def gen_stmt(self, memory):
+
+    def gen_stmts(self):
         for k in sorted(self.memory):
-            if k >= self.curr:
+            c = int(self.curr)
+            if c != -1 and int(k) >= c:
                 yield (k, self.memory[k])
-    
+
+    def is_int_str(self, s):
+        return re.search("^[0-9]+$", s) != None
+
     def end_stmt(self):
         self.curr = -1
     
     def list_stmt(self):
         for k in sorted(self.memory):
-            print " ".join(list(self.memory[k]))
+            print(" ".join(list(self.memory[k])))
     
     def clear_stmt(self):
         self.memory = {}
@@ -110,13 +110,15 @@ class Interpreter(object):
         return self.symbols[x]
 
     def repl(self):
-        line = str(raw_input("> "))
-        if line == "QUIT":
-            exit(0)
-        try: 
-            self.interpret(line)
-        except: 
-            if line: 
-                print "ParseError"
-        self.repl()
-
+        try:
+            line = str(input("tiny_basic> ")).upper()
+            if line == "QUIT":
+                exit(0)
+            try: 
+                self.interpret(line)
+            except:
+                if line:
+                    print('PARSE ERROR "{}"'.format(line))
+            self.repl()
+        except:
+            pass
