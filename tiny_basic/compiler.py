@@ -3,17 +3,25 @@ import re
 
 class Compiler(object):
     def __init__(self):
-        self.parser          = Parser()
-        self.parse_tree      = None
+        self.parser         = Parser()
+        self.parse_tree     = None
         self.symbols        = {}
         self.malloc_symbols = {}
+        self.level          = 0
+
+    def write(self, string):
+        print((self.level * "\t") + string)
 
     def compile(self, program):
         self.parse_tree = self.parser(program)
-        print("#include <stdio.h>")
-        print("#include <stdlib.h>")
-        print("#include <string.h>")
-        print("int main (void) {")
+
+        self.write("#include <stdio.h>")
+        self.write("#include <stdlib.h>")
+        self.write("#include <string.h>\n")
+        self.write("int main(void) {")
+
+        self.level += 1
+
         for line in self.parse_tree:
             if "LET" in line:
                 id = line[2]
@@ -23,9 +31,13 @@ class Compiler(object):
                 id = line[2]
                 if id not in self.symbols:
                     self.compile_var((id, '""'))
+
         for line in self.parse_tree:
             self.compile_stmt(line)
-        print("}")
+
+        self.level -= 1
+
+        self.write("}")
     
     def compile_stmt(self, stmt):
         head, tail = stmt[0], stmt[1:]
@@ -44,7 +56,9 @@ class Compiler(object):
                 self.compile_input(tail)
             else:
                 self.compile_label(head)
+                self.level += 1
                 self.compile_stmt(tail)
+                self.level -= 1
         else:
             if head == "END":
                 self.compile_return()
@@ -52,20 +66,24 @@ class Compiler(object):
     def compile_input(self, xs):
         id, buffer = xs[0], 50
         self.malloc_symbols[id] = buffer
-        print("{0} = malloc(sizeof(char) * {1}); \n\
-fgets({0}, {1}, stdin); \n\
-if ({0}[strlen({0}) - 1] == '\\n') {{ \n\
-{0}[strlen({0}) - 1] = '\\0'; \n\
-}}".format(id, buffer))
+        self.write("{0} = malloc(sizeof(char) * {1});".format(id, buffer))
+        self.write("fgets({0}, {1}, stdin);".format(id, buffer))
+        self.write("if ({0}[strlen({0}) - 1] == '\\n') {{".format(id, buffer))
+        self.level += 1
+        self.write("{0}[strlen({0}) - 1] = '\\0';".format(id, buffer))
+        self.level -= 1
+        self.write("}")
 
     def compile_if(self, xs):
         cond, stmt = xs[0], xs[2:]
-        print("if (%s) {" % (cond))
+        self.write("if (%s) {" % (cond))
+        self.level += 1
         self.compile_stmt(stmt)
-        print("}")
+        self.level -= 1
+        self.write("}")
 
     def compile_goto(self, xs):
-        print("goto label_%s;" % xs[0])
+        self.write("goto label_%s;" % xs[0])
 
     def compile_var(self, xs):
         id = xs[0]
@@ -82,21 +100,21 @@ if ({0}[strlen({0}) - 1] == '\\n') {{ \n\
             t = "int"
         self.symbols[id] = (t, v)
         if t == "char":
-            print("%s* %s;" % (t, id))
+            self.write("%s* %s;" % (t, id))
         elif t == "int":
-            print("%s %s;" % (t, id))
+            self.write("%s %s;" % (t, id))
 
     def compile_var_set(self, xs):
         id, nv = xs[0], xs[1]
         t, ov = self.symbols[id] 
         self.symbols[id] = (t, nv)
-        print("%s = %s;" % (id, nv))
+        self.write("%s = %s;" % (id, nv))
 
     def compile_comment(self, xs):
-        print("// %s" % xs[0].replace('"', ""))
+        self.write("// %s" % xs[0].replace('"', ""))
 
     def compile_label(self, n):
-        print("label_%s:" % n)
+        self.write("label_%s:" % n)
     
     def compile_printf(self, xs):
         fmt, args = [], []
@@ -119,12 +137,12 @@ if ({0}[strlen({0}) - 1] == '\\n') {{ \n\
         if fmt and args:
             fmt = " ".join(fmt)
             args = ", ".join(args)
-            print('printf("{0}\\n", {1});'.format(fmt, args))
+            self.write('printf("{0}\\n", {1});'.format(fmt, args))
 
     def compile_return(self):
         for id in self.malloc_symbols:
-            print("free(%s);" % id)
-        print("return 0;")
+            self.write("free(%s);" % id)
+        self.write("return 0;")
 
     def is_quoted(self, s):
         return re.match('^".*"$', s)
